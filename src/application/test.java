@@ -228,8 +228,8 @@ public class test extends Application {
 			
 			for(int row = 0; row < 10; row++) {
 				for(int col = 0; col < 12; col++) {
-					for(int y = 0; y < 38; y++) {
-						for(int x = 0; x < 38; x++) {
+					for(int x = 0; x < 38; x++) {
+						for(int y = 0; y < 38; y++) {
 							int relativeX = (int) (x*6.7368);
 							int relativeY = (int) (y*6.7368);
 							int pictureNo = row * 12 + col;
