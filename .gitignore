@@ -1,0 +1,7 @@
+bin
+CThead
+.project
+.settings/
+.classpath
+build.fxbuild
+
