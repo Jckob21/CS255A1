@@ -19,6 +19,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 
@@ -114,6 +115,8 @@ public class Main extends Application {
 		Scene scene = new Scene(root, 1024, 768);
 		primaryStage.setScene(scene);
 		primaryStage.show();
+		
+		createThumbWindow(0,0);
 	}
 	
 	private void readData(String filename) throws IOException {
@@ -183,6 +186,64 @@ public class Main extends Application {
 		}
 		
 		return image;
+	}
+	
+	public void createThumbWindow(double atX, double atY) {
+		// create image containing all thumbs
+		WritableImage thumbImage = new WritableImage(500, 500);
+		ImageView thumbView = new ImageView(thumbImage);
+		PixelWriter imageWriter = thumbImage.getPixelWriter();
+		
+		// make the image initially white
+		for (int x = 0; x < thumbImage.getHeight(); x++) {
+			for (int y = 0; y < thumbImage.getWidth(); y++) {
+				imageWriter.setColor(x, y, Color.WHITE);
+			}
+		}
+		
+		// TODO create final variables for rows and columns as they are fixed
+		// it would be sth like: rowNumber = 10; imagesInCol = 12; thumbImageSize = 38; gap = 4;
+		// loop through each image in particular row and column
+		for(int row = 0; row < 10; row++) { 
+			for(int col = 0; col < 12; col++) {
+				// draw image resized using nearest neighour technique
+				for(int x = 0; x < 38; x++) {
+					for(int y = 0; y < 38; y++) {
+						int pictureNo = row * 12 + col;
+
+						if(pictureNo < PICTURE_NUMBER) { // in case last row is not perfect
+							int relativeX = (int) (x*DEFAULT_RESOLUTION/(double)38);
+							int relativeY = (int) (y*DEFAULT_RESOLUTION/(double)38);
+
+							float val = grey[pictureNo][relativeX][relativeY];
+							Color color = Color.color(val, val, val);
+							
+							imageWriter.setColor(y + col*(38+4), x + row*(38+4), color);
+						}
+					}
+				}
+			}
+		}
+		
+		// create layout for the image
+		StackPane thumbLayout = new StackPane();
+		thumbLayout.getChildren().add(thumbView);
+		
+		// create new scene
+		Scene thumbViewScene = new Scene(thumbLayout, thumbImage.getWidth(), thumbImage.getHeight());
+		
+		// TODO mouse-over handler here
+		
+		
+		// create window
+		Stage newWindow = new Stage();
+		newWindow.setTitle("CThead Slices");
+		newWindow.setScene(thumbViewScene);
+		
+		newWindow.setX(atX);
+		newWindow.setY(atY);
+		
+		newWindow.show();
 	}
 	
 	public static void main(String[] args) {
