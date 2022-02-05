@@ -62,7 +62,7 @@ public class Main extends Application {
 		}
 		
 		// get image slice
-		Image top_image = GetSlice();
+		Image top_image = getSlice();
 		imageView = new ImageView(top_image);
 		
 		// create buttons
@@ -182,31 +182,6 @@ public class Main extends Application {
 			}
 		}
 		
-		return image;
-	}
-	
-	//TODO delete this one, just for sake of test
-	public Image GetSlice() {
-		WritableImage image = new WritableImage(256, 256);
-		// Find the width and height of the image to be process
-		int width = (int) image.getWidth();
-		int height = (int) image.getHeight();
-		float val;
-
-		// Get an interface to write to that image memory
-		PixelWriter image_writer = image.getPixelWriter();
-
-		// Iterate over all pixels
-		for (int y = 0; y < height; y++) {
-			for (int x = 0; x < width; x++) {
-				// For each pixel, get the colour from the cthead slice 76
-				val = grey[76][y][x];
-				Color color = Color.color(val, val, val);
-
-				// Apply the new colour
-				image_writer.setColor(x, y, color);
-			}
-		}
 		return image;
 	}
 	
