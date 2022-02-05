@@ -45,8 +45,8 @@ public class Main extends Application {
 	private float grey[][][];
 	
 	//current state variables;
-	private int currentlyDisplayedImage = DEFAULT_IMAGE;
-	private int currentlyDisplayedSize = DEFAULT_RESOLUTION;
+	private int currentImage = DEFAULT_IMAGE;
+	private int currentSize = DEFAULT_RESOLUTION;
 	
 	@Override
 	public void start(Stage primaryStage) {
@@ -92,8 +92,11 @@ public class Main extends Application {
 		sizeSlider.valueProperty().addListener((ob, oldVal, newVal) -> {
 			System.out.println("New size value: " + newVal.intValue());
 			
+			//set new size value
+			currentSize = newVal.intValue();
+			
 			imageView.setImage(null); // clear the old image
-			Image newImage = getSlice(76, newVal.intValue()); // TODO change fixed 76 to given value
+			Image newImage = getSlice(); // TODO change fixed 76 to given value
 			imageView.setImage(newImage); // Update the GUI so the new image is displayed
 		});
 		
@@ -159,19 +162,19 @@ public class Main extends Application {
 		System.out.println(min + " " + max);
 	}
 	
-	public Image getSlice(int imageNumber, int size) {
-		WritableImage image = new WritableImage(size, size);
+	public Image getSlice() {
+		WritableImage image = new WritableImage(currentSize, currentSize);
 		
 		PixelWriter image_writer = image.getPixelWriter();
 		
 		// perform resize using nearest neighbor
-		for (int y = 0; y < size; y++) {
-			for (int x = 0; x < size; x++) {
+		for (int y = 0; y < currentSize; y++) {
+			for (int x = 0; x < currentSize; x++) {
 				// calculate relative position in original image
-				int relativeX = (int)(x*(DEFAULT_RESOLUTION/(double)size));
-				int relativeY = (int)(y*(DEFAULT_RESOLUTION/(double)size));
+				int relativeX = (int)(x*(DEFAULT_RESOLUTION/(double)currentSize));
+				int relativeY = (int)(y*(DEFAULT_RESOLUTION/(double)currentSize));
 				
-				float val = grey[imageNumber][relativeY][relativeX];
+				float val = grey[currentImage][relativeY][relativeX];
 				Color color = Color.color(val, val, val);
 
 				// Apply the new colour
