@@ -37,9 +37,16 @@ public class Main extends Application {
 	private static final double MAX_GAMMA = 4;
 	private static final double DEFAULT_GAMMA = 1;
 	
+	//default state
+	private static final int DEFAULT_IMAGE = 76;
+	
 	ImageView imageView;
 	private short cthead[][][];
 	private float grey[][][];
+	
+	//current state variables;
+	private int currentlyDisplayedImage = DEFAULT_IMAGE;
+	private int currentlyDisplayedSize = DEFAULT_RESOLUTION;
 	
 	@Override
 	public void start(Stage primaryStage) {
@@ -85,13 +92,15 @@ public class Main extends Application {
 		sizeSlider.valueProperty().addListener((ob, oldVal, newVal) -> {
 			System.out.println("New size value: " + newVal.intValue());
 			
-			//clear image, get new slice, set image
+			imageView.setImage(null); // clear the old image
+			Image newImage = getSlice(76, newVal.intValue()); // TODO change fixed 76 to given value
+			imageView.setImage(newImage); // Update the GUI so the new image is displayed
 		});
 		
 		gammaSlider.valueProperty().addListener((ob, oldVal, newVal) -> {
 			System.out.println("New gamma value: " + newVal.doubleValue());
 			
-			//clear image, get new slice with given gamma, set image
+			
 		});
 		
 		// build main GUI scene
@@ -148,10 +157,29 @@ public class Main extends Application {
 		
 		// diagnostic - forCThead this should be -1117, 2248
 		System.out.println(min + " " + max);
+	}
+	
+	public Image getSlice(int imageNumber, int size) {
+		WritableImage image = new WritableImage(size, size);
 		
+		PixelWriter image_writer = image.getPixelWriter();
 		
+		// perform resize using nearest neighbor
+		for (int y = 0; y < size; y++) {
+			for (int x = 0; x < size; x++) {
+				// calculate relative position in original image
+				int relativeX = (int)(x*(DEFAULT_RESOLUTION/(double)size));
+				int relativeY = (int)(y*(DEFAULT_RESOLUTION/(double)size));
+				
+				float val = grey[imageNumber][relativeY][relativeX];
+				Color color = Color.color(val, val, val);
+
+				// Apply the new colour
+				image_writer.setColor(x, y, color);
+			}
+		}
 		
-		
+		return image;
 	}
 	
 	//TODO delete this one, just for sake of test
