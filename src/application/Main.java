@@ -18,6 +18,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -232,8 +233,31 @@ public class Main extends Application {
 		// create new scene
 		Scene thumbViewScene = new Scene(thumbLayout, thumbImage.getWidth(), thumbImage.getHeight());
 		
-		// TODO mouse-over handler here
-		
+		thumbView.addEventHandler(MouseEvent.MOUSE_MOVED, event -> {			
+			//find out which picture is underneath
+			double hoverX = event.getX();
+			double hoverY = event.getY();
+			
+			int selectedColumn = (int) (hoverX/(38+4));
+			int selectedRow = (int) (hoverY/(38+4));
+			
+			//check if it is not in the gap between
+			if (hoverX % (38+4) <= 38 && hoverY % (38+4) <= 38) {
+				int selectedPicture = selectedRow * 12 + selectedColumn;
+				
+				//check if its not out of the thumbnails
+				if (selectedPicture < PICTURE_NUMBER) {
+					// set displayed picture to new one, refresh the view
+					this.currentImage = selectedPicture;
+					
+					imageView.setImage(null); // clear the old image
+					Image newImage = getSlice();
+					imageView.setImage(newImage); // Update the GUI so the new image is displayed
+				}
+			}
+
+			event.consume();
+		});
 		
 		// create window
 		Stage newWindow = new Stage();
