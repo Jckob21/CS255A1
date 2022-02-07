@@ -49,6 +49,12 @@ public class Main extends Application {
 	//current state variables;
 	private int currentImage = DEFAULT_IMAGE;
 	private int currentSize = DEFAULT_RESOLUTION;
+	private ResizeMethod currentResizeMethod = ResizeMethod.NEAREST_NEIGHBOUR;
+	
+	enum ResizeMethod {
+		NEAREST_NEIGHBOUR,
+		BILINEAR_INTERPOLATION
+	}
 	
 	@Override
 	public void start(Stage primaryStage) {
@@ -85,10 +91,16 @@ public class Main extends Application {
 		
 		group.selectedToggleProperty().addListener((ob, o, n) -> {
 			if (rb1.isSelected()) {
-				System.out.println("Radio button 1 clicked");
+				currentResizeMethod = ResizeMethod.NEAREST_NEIGHBOUR;
+				System.out.println("Resize method changed to NEAREST_NEIGHBOUR");
 			} else if (rb2.isSelected()) {
-				System.out.println("Radio button 2 clicked");
+				currentResizeMethod = ResizeMethod.BILINEAR_INTERPOLATION;
+				System.out.println("Resize method changed to BILINEAR INTERPOLATION");
 			}
+			
+			imageView.setImage(null); // clear the old image
+			Image newImage = getSlice();
+			imageView.setImage(newImage); // Update the GUI so the new image is displayed
 		});
 		
 		sizeSlider.valueProperty().addListener((ob, oldVal, newVal) -> {
@@ -98,7 +110,7 @@ public class Main extends Application {
 			currentSize = newVal.intValue();
 			
 			imageView.setImage(null); // clear the old image
-			Image newImage = getSlice(); // TODO change fixed 76 to given value
+			Image newImage = getSlice();
 			imageView.setImage(newImage); // Update the GUI so the new image is displayed
 		});
 		
@@ -171,20 +183,26 @@ public class Main extends Application {
 		
 		PixelWriter image_writer = image.getPixelWriter();
 		
-		// perform resize using nearest neighbor
-		for (int y = 0; y < currentSize; y++) {
-			for (int x = 0; x < currentSize; x++) {
-				// calculate relative position in original image
-				int relativeX = (int)(x*(DEFAULT_RESOLUTION/(double)currentSize));
-				int relativeY = (int)(y*(DEFAULT_RESOLUTION/(double)currentSize));
-				
-				float val = grey[currentImage][relativeY][relativeX];
-				Color color = Color.color(val, val, val);
+		if(currentResizeMethod == ResizeMethod.NEAREST_NEIGHBOUR) {
+			// perform resize using nearest neighbor
+			for (int y = 0; y < currentSize; y++) {
+				for (int x = 0; x < currentSize; x++) {
+					// calculate relative position in original image
+					int relativeX = (int)(x*(DEFAULT_RESOLUTION/(double)currentSize));
+					int relativeY = (int)(y*(DEFAULT_RESOLUTION/(double)currentSize));
+					
+					float val = grey[currentImage][relativeY][relativeX];
+					Color color = Color.color(val, val, val);
 
-				// Apply the new colour
-				image_writer.setColor(x, y, color);
+					// Apply the new colour
+					image_writer.setColor(x, y, color);
+				}
 			}
+		} else if(currentResizeMethod == ResizeMethod.BILINEAR_INTERPOLATION) {
+			System.out.println("Bilinear Resizing should be implemented");
 		}
+		
+		
 		
 		return image;
 	}
