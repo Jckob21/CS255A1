@@ -57,7 +57,7 @@ public class Main extends Application {
 	}
 	
 	@Override
-	public void start(Stage primaryStage) {
+	public void start(Stage primaryStage) {		
 		primaryStage.setTitle("CThead Viewer");
 		
 		try {
@@ -181,7 +181,7 @@ public class Main extends Application {
 	public Image getSlice() {
 		WritableImage image = new WritableImage(currentSize, currentSize);
 		
-		PixelWriter image_writer = image.getPixelWriter();
+		PixelWriter imageWriter = image.getPixelWriter();
 		
 		if(currentResizeMethod == ResizeMethod.NEAREST_NEIGHBOUR) {
 			// perform resize using nearest neighbor
@@ -195,16 +195,77 @@ public class Main extends Application {
 					Color color = Color.color(val, val, val);
 
 					// Apply the new colour
-					image_writer.setColor(x, y, color);
+					imageWriter.setColor(x, y, color);
 				}
 			}
 		} else if(currentResizeMethod == ResizeMethod.BILINEAR_INTERPOLATION) {
 			System.out.println("Bilinear Resizing should be implemented");
+
+			for (int y = 0; y < currentSize; y++) {
+				for (int x = 0; x < currentSize; x++) {
+					// calculate relative position in original image
+					double relativeX = x*(DEFAULT_RESOLUTION/(double)currentSize);
+					double relativeY = y*(DEFAULT_RESOLUTION/(double)currentSize);
+					
+					// make sure relative values do not go over the size of the image
+					if (relativeX > DEFAULT_RESOLUTION - 1) {
+						relativeX = DEFAULT_RESOLUTION - 1;
+					}
+					if (relativeY > DEFAULT_RESOLUTION - 1) {
+						relativeY = DEFAULT_RESOLUTION - 1;
+					}
+					
+					int x1 = (int) Math.floor(relativeX);
+					int x2 = (int) Math.ceil(relativeX);
+					int y1 = (int) Math.floor(relativeY);
+					int y2 = (int) Math.ceil(relativeY);
+					
+				//
+					
+					float aColorValue = grey[currentImage][y1][x1];
+					float bColorValue = grey[currentImage][y2][x1];
+					float cColorValue = grey[currentImage][y2][x2];
+					float dColorValue = grey[currentImage][y1][x2];
+					
+					float eColorValue = lerp(bColorValue, cColorValue,x1,x2,relativeX);
+					
+					float fColorValue = lerp(aColorValue, dColorValue,x1,x2,relativeX);
+					
+					float gColorValue = lerp(eColorValue, fColorValue,y1,y2,relativeY);
+					
+					Color color = Color.color(gColorValue, gColorValue, gColorValue);
+					
+					imageWriter.setColor(x, y, color);
+					//
+					// b - -f- c
+					// |    g  |
+					// |       |
+					// |       |
+					// a - -e- d
+					//
+					// where:
+					// a(x1,y1)
+					// b(x1,y2)
+					// c(x2,y2)
+					// d(x2,y1)
+					//
+					// e(relativeX,y1)
+					// f(relativeX,y2)
+					// g(relativeX,relativeY)
+					
+					
+					
+				}
+			}
 		}
 		
 		
 		
 		return image;
+	}
+	
+	public float lerp(float v1, float v2, double p1, double p2, double p) {		
+		return (float)(v1 + (v2 - v1)*((p-p1)/(p2-p1)));
 	}
 	
 	public void createThumbWindow(double atX, double atY) {
