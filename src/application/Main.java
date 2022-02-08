@@ -49,6 +49,7 @@ public class Main extends Application {
 	//current state variables;
 	private int currentImage = DEFAULT_IMAGE;
 	private int currentSize = DEFAULT_RESOLUTION;
+	private double currentGamma = DEFAULT_GAMMA;
 	private ResizeMethod currentResizeMethod = ResizeMethod.NEAREST_NEIGHBOUR;
 	
 	enum ResizeMethod {
@@ -117,7 +118,12 @@ public class Main extends Application {
 		gammaSlider.valueProperty().addListener((ob, oldVal, newVal) -> {
 			System.out.println("New gamma value: " + newVal.doubleValue());
 			
+			//set new gamma value
+			currentGamma = newVal.doubleValue();
 			
+			imageView.setImage(null); // clear the old image
+			Image newImage = getSlice();
+			imageView.setImage(newImage); // Update the GUI so the new image is displayed
 		});
 		
 		// build main GUI scene
