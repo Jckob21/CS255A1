@@ -16,6 +16,7 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
@@ -71,8 +72,8 @@ public class Main extends Application {
 		}
 		
 		// get image slice
-		Image top_image = getSlice();
-		imageView = new ImageView(top_image);
+		Image topImage = getSlice();
+		imageView = new ImageView(topImage);
 		
 		// create buttons
 		final ToggleGroup group = new ToggleGroup();
@@ -275,8 +276,18 @@ public class Main extends Application {
 			}
 		}
 		
-		
-		
+		PixelReader imageReader = image.getPixelReader();
+		//apply gamma to the image
+		for (int y = 0; y < currentSize; y++) {
+			for (int x = 0; x < currentSize; x++) {
+				double val = imageReader.getColor(y,x).getRed();
+				double newVal = Math.pow(val, 1.0/currentGamma);
+				
+				Color color = Color.color(newVal, newVal, newVal);
+				
+				imageWriter.setColor(y, x, color);
+			}
+		}
 		return image;
 	}
 	
