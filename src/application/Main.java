@@ -29,6 +29,13 @@ public class Main extends Application {
 	private static final int SCENE_WIDTH = 1024;
 	private static final int SCENE_HEIGHT = 768;
 	
+	private static final int THUMB_IMAGE_WIDTH = 500;
+	private static final int THUMB_IMAGE_HEIGHT = 500;
+	private static final int THUMB_ROW_NUMBER = 10;
+	private static final int THUMB_COL_NUMBER = 12;
+	private static final int THUMB_PICTURE_SIZE = 38;
+	private static final int THUMB_GAP_SIZE = 4;
+	
 	private static final int PICTURE_WIDTH = 256;
 	private static final int PICTURE_HEIGHT = 256;
 	private static final int PICTURE_NUMBER = 113;
@@ -42,6 +49,8 @@ public class Main extends Application {
 	private static final double DEFAULT_GAMMA = 1;
 	
 	private static final int DEFAULT_IMAGE = 76;
+	
+	private static final int COLOR_VARIATIONS = 256;
 	
 	private static final ResizeMethod DEFAULT_RESIZE_METHOD 
 											= ResizeMethod.NEAREST_NEIGHBOUR;
@@ -174,6 +183,8 @@ public class Main extends Application {
 			}
 		}
 		
+		in.close();
+		
 		// diagnostic - forCThead this should be -1117, 2248
 		System.out.println(min + " " + max);
 	}
@@ -287,7 +298,7 @@ public class Main extends Application {
 		}
 		
 		// create a look-up table with new Gamma values
-		HashMap<Integer, Double> gammaValues = new HashMap<>(256);
+		HashMap<Integer, Double> gammaValues = new HashMap<>(COLOR_VARIATIONS);
 		for(int i=0; i<256; i++) {
 			gammaValues.put(i, Math.pow(i/255.0, (1.0/currentGamma)));
 		}
@@ -313,13 +324,6 @@ public class Main extends Application {
 		return (float)(v1 + (v2 - v1)*((p-p1)/(p2-p1)));
 	}
 	
-	private static final int THUMB_IMAGE_WIDTH = 500;
-	private static final int THUMB_IMAGE_HEIGHT = 500;
-	private static final int THUMB_ROW_NUMBER = 10;
-	private static final int THUMB_COL_NUMBER = 12;
-	private static final int THUMB_PICTURE_SIZE = 38;
-	private static final int THUMB_GAP_SIZE = 4;
-	
 	public void createThumbWindow(double atX, double atY) {
 		// create image containing all thumbs
 		WritableImage thumbImage = 
@@ -335,9 +339,7 @@ public class Main extends Application {
 		}
 		
 		double relativeDivisor = DEFAULT_RESOLUTION/(double)THUMB_PICTURE_SIZE;
-		// TODO create final variables for rows and columns as they are fixed
-		// it would be sth like: rowNumber = 10; imagesInCol = 12; thumbImageSize = 38; gap = 4;
-		// loop through each image in particular row and column
+
 		for(int row = 0; row < THUMB_ROW_NUMBER; row++) { 
 			for(int col = 0; col < THUMB_COL_NUMBER; col++) {
 				// draw image resized using nearest neighor technique
@@ -387,7 +389,7 @@ public class Main extends Application {
 					// set displayed picture to new one, refresh the view
 					this.currentImage = selectedPicture;
 					
-					updateImage(imageView);
+					this.updateImage(imageView);
 				}
 			}
 
