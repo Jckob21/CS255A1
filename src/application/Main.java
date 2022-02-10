@@ -4,9 +4,8 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Scanner;
+import java.util.HashMap;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
@@ -20,7 +19,6 @@ import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -99,14 +97,14 @@ public class Main extends Application {
 				currentResizeMethod = ResizeMethod.BILINEAR_INTERPOLATION;
 				System.out.println("Resize method changed to BILINEAR INTERPOLATION");
 			}
-			
+			//TODO
 			imageView.setImage(null); // clear the old image
 			Image newImage = getSlice();
 			imageView.setImage(newImage); // Update the GUI so the new image is displayed
 		});
 		
 		sizeSlider.valueProperty().addListener((ob, oldVal, newVal) -> {
-			System.out.println("New size value: " + newVal.intValue());
+			//System.out.println("New size value: " + newVal.intValue());
 			
 			//set new size value
 			currentSize = newVal.intValue();
@@ -117,7 +115,7 @@ public class Main extends Application {
 		});
 		
 		gammaSlider.valueProperty().addListener((ob, oldVal, newVal) -> {
-			System.out.println("New gamma value: " + newVal.doubleValue());
+			//System.out.println("New gamma value: " + newVal.doubleValue());
 			
 			//set new gamma value
 			currentGamma = newVal.doubleValue();
@@ -276,18 +274,27 @@ public class Main extends Application {
 			}
 		}
 		
+		//create a map with new Gamma value
+		HashMap<Integer, Double> gammaValues = new HashMap<>(256);
+		for(int i=0; i<256; i++) {
+			gammaValues.put(i, Math.pow(i/255.0, (1.0/currentGamma)));
+			//System.out.println(i + ": Gamma value created: " + Math.pow(i/255.0, (1.0/currentGamma)));
+		}
+		
 		PixelReader imageReader = image.getPixelReader();
 		//apply gamma to the image
 		for (int y = 0; y < currentSize; y++) {
 			for (int x = 0; x < currentSize; x++) {
 				double val = imageReader.getColor(y,x).getRed();
-				double newVal = Math.pow(val, 1.0/currentGamma);
-				
+				//double newVal = Math.pow(val, 1.0/currentGamma);
+				double newVal = gammaValues.get(Integer.valueOf((int)Math.round(val * 255.0)));
+				//System.out.println("Color read: " + (int)Math.round(val * 255.0));
 				Color color = Color.color(newVal, newVal, newVal);
 				
 				imageWriter.setColor(y, x, color);
 			}
 		}
+
 		return image;
 	}
 	
@@ -374,6 +381,12 @@ public class Main extends Application {
 		newWindow.setY(atY);
 		
 		newWindow.show();
+	}
+	
+	public void updateImage(ImageView imageView) {
+		imageView.setImage(null); // clear the old image
+		Image newImage = getSlice();
+		imageView.setImage(newImage); // Update the GUI so the new image is displayed
 	}
 	
 	public static void main(String[] args) {
