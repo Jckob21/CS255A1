@@ -55,7 +55,7 @@ public class Main extends Application {
 	private static final ResizeMethod DEFAULT_RESIZE_METHOD 
 											= ResizeMethod.NEAREST_NEIGHBOUR;
 	
-	ImageView imageView; // ImageView of the displayed image
+	private ImageView imageView; // ImageView of the displayed image
 	private short cthead[][][];
 	private float grey[][][];
 	
@@ -77,8 +77,10 @@ public class Main extends Application {
 		try {
 			this.readData(FILENAME);
 		} catch (IOException e) {
-			System.out.println("Could not find CThead file in the working directory.");
-			System.out.println("Working Directory = " + System.getProperty("user.dir"));
+			System.out.println("Could not find CThead file in the working "
+					+ "directory.");
+			System.out.println("Working Directory = " 
+					+ System.getProperty("user.dir"));
 			e.printStackTrace();
 			System.exit(1);
 		}
@@ -138,7 +140,7 @@ public class Main extends Application {
 		primaryStage.setScene(scene);
 		primaryStage.show();
 		
-		this.createThumbWindow(0,0);
+		this.createThumbWindow(0, 0);
 	}
 	
 	private void readData(String filename) throws IOException {
@@ -178,7 +180,8 @@ public class Main extends Application {
 					cthead[k][j][i] = read;
 					
 					// scale color to 0-1 values
-					grey[k][j][i] = ((float) cthead[k][j][i] - (float) min) / ((float) max - (float) min);
+					grey[k][j][i] = ((float) cthead[k][j][i] 
+							- (float) min) / ((float) max - (float) min);
 				}
 			}
 		}
@@ -194,15 +197,15 @@ public class Main extends Application {
 		
 		PixelWriter imageWriter = image.getPixelWriter();
 		
-		double relativeDivisor = DEFAULT_RESOLUTION/(double)currentSize;
+		double relativeDivisor = DEFAULT_RESOLUTION / (double) currentSize;
 		
-		if(currentResizeMethod == ResizeMethod.NEAREST_NEIGHBOUR) {
+		if (currentResizeMethod == ResizeMethod.NEAREST_NEIGHBOUR) {
 			// perform resize using nearest neighbor
 			for (int y = 0; y < currentSize; y++) {
 				for (int x = 0; x < currentSize; x++) {
 					// calculate relative position in original image
-					int relativeX = (int)Math.round(x*relativeDivisor);
-					int relativeY = (int)Math.round(y*relativeDivisor);
+					int relativeX = (int) Math.round(x * relativeDivisor);
+					int relativeY = (int) Math.round(y * relativeDivisor);
 					
 					if (relativeX > DEFAULT_RESOLUTION - 1) {
 						relativeX = DEFAULT_RESOLUTION - 1;
@@ -218,12 +221,12 @@ public class Main extends Application {
 					imageWriter.setColor(x, y, color);
 				}
 			}
-		} else if(currentResizeMethod == ResizeMethod.BILINEAR_INTERPOLATION) {
+		} else if (currentResizeMethod == ResizeMethod.BILINEAR_INTERPOLATION) {
 			for (int y = 0; y < currentSize; y++) {
 				for (int x = 0; x < currentSize; x++) {
 					// calculate relative position in original image
-					double relativeX = x*relativeDivisor;
-					double relativeY = y*relativeDivisor;
+					double relativeX = x * relativeDivisor;
+					double relativeY = y * relativeDivisor;
 					
 					if (relativeX > DEFAULT_RESOLUTION - 1) {
 						relativeX = DEFAULT_RESOLUTION - 1;
@@ -242,38 +245,53 @@ public class Main extends Application {
 					float cColorValue = grey[currentImage][y2][x2];
 					float dColorValue = grey[currentImage][y1][x2];
 					
-					// if both relative coordinates are integers, just do nearest neighbor
-					if(relativeX - (int)relativeX == 0 && relativeY - (int)relativeY == 0) {
-						float val = grey[currentImage]
-								[(int)Math.round(relativeY)][(int)Math.round(relativeX)];
+					// if both relative coordinates are integers,
+					// just do nearest neighbor
+					if (relativeX - (int) relativeX == 0
+							&& relativeY - (int) relativeY == 0) {
+						float val = grey
+								[currentImage]
+								[(int) Math.round(relativeY)]
+								[(int) Math.round(relativeX)];
 						Color color = Color.color(val, val, val);
 						
 						// Apply the new color
 						imageWriter.setColor(x, y, color);
 					
-					// if only relative X coordinate is an integer, do lerp function only on y coordinates
-					} else if (relativeX - (int)relativeX == 0) {
-						float gColorValue = lerp(aColorValue, bColorValue,y1,y2,relativeY);
+					// if only relative X coordinate is an integer,
+					// do lerp function only on y coordinates
+					} else if (relativeX - (int) relativeX == 0) {
+						float gColorValue = lerp(aColorValue, bColorValue,
+								y1, y2, relativeY);
 						
-						Color color = Color.color(gColorValue, gColorValue, gColorValue);
+						Color color = Color.color(gColorValue, gColorValue,
+								gColorValue);
 						imageWriter.setColor(x, y, color);
 					
-					// if only relative Y coordinate is an integer, do lerp function only on x coordinates
-					} else if (relativeY - (int)relativeY == 0) {
-						float gColorValue = lerp(aColorValue, dColorValue,x1,x2,relativeX);
+					// if only relative Y coordinate is an integer,
+					// do lerp function only on x coordinates
+					} else if (relativeY - (int) relativeY == 0) {
+						float gColorValue = lerp(aColorValue, dColorValue,
+								x1, x2, relativeX);
 						
-						Color color = Color.color(gColorValue, gColorValue, gColorValue);
+						Color color = Color.color(gColorValue, gColorValue,
+								gColorValue);
 						imageWriter.setColor(x, y, color);
 						
-					// if both coordinates are not integers, do full bilinear interpolation
+					// if both coordinates are not integers,
+					// do full bilinear interpolation
 					} else {
-						float fColorValue = lerp(bColorValue, cColorValue,x1,x2,relativeX);
+						float fColorValue = lerp(bColorValue, cColorValue,
+								x1, x2, relativeX);
 						
-						float eColorValue = lerp(aColorValue, dColorValue,x1,x2,relativeX);
+						float eColorValue = lerp(aColorValue, dColorValue,
+								x1, x2, relativeX);
 						
-						float gColorValue = lerp(eColorValue, fColorValue,y1,y2,relativeY);
+						float gColorValue = lerp(eColorValue, fColorValue,
+								y1, y2, relativeY);
 						
-						Color color = Color.color(gColorValue, gColorValue, gColorValue);
+						Color color = Color.color(gColorValue, gColorValue,
+								gColorValue);
 						
 						imageWriter.setColor(x, y, color);
 					}
@@ -299,17 +317,17 @@ public class Main extends Application {
 		
 		// create a look-up table with new Gamma values
 		HashMap<Integer, Double> gammaValues = new HashMap<>(COLOR_VARIATIONS);
-		for(int i=0; i<256; i++) {
-			gammaValues.put(i, Math.pow(i/255.0, (1.0/currentGamma)));
+		for (int i=0; i<COLOR_VARIATIONS; i++) {
+			gammaValues.put(i, Math.pow(i / 255.0, (1.0 / currentGamma)));
 		}
 		
 		// apply gamma correction
 		PixelReader imageReader = image.getPixelReader();
 		for (int y = 0; y < currentSize; y++) {
 			for (int x = 0; x < currentSize; x++) {
-				double val = imageReader.getColor(y,x).getRed(); // we could take any channel as it is grey
+				double val = imageReader.getColor(y, x).getRed(); // we could take any channel as it is grey
 				//double newVal = Math.pow(val, 1.0/currentGamma); - this does not use look-up table
-				double newVal = gammaValues.get(Integer.valueOf((int)Math.round(val * 255.0))); // get value from look-up table
+				double newVal = gammaValues.get(Integer.valueOf((int) Math.round(val * 255.0))); // get value from look-up table
 				
 				Color color = Color.color(newVal, newVal, newVal);
 				
@@ -321,7 +339,7 @@ public class Main extends Application {
 	}
 	
 	public float lerp(float v1, float v2, double p1, double p2, double p) {		
-		return (float)(v1 + (v2 - v1)*((p-p1)/(p2-p1)));
+		return (float) (v1 + (v2 - v1) * ((p - p1) / (p2 - p1)));
 	}
 	
 	public void createThumbWindow(double atX, double atY) {
@@ -338,25 +356,25 @@ public class Main extends Application {
 			}
 		}
 		
-		double relativeDivisor = DEFAULT_RESOLUTION/(double)THUMB_PICTURE_SIZE;
+		double relativeDivisor = DEFAULT_RESOLUTION / (double) THUMB_PICTURE_SIZE;
 
-		for(int row = 0; row < THUMB_ROW_NUMBER; row++) { 
-			for(int col = 0; col < THUMB_COL_NUMBER; col++) {
+		for (int row = 0; row < THUMB_ROW_NUMBER; row++) { 
+			for (int col = 0; col < THUMB_COL_NUMBER; col++) {
 				// draw image resized using nearest neighor technique
-				for(int x = 0; x < THUMB_PICTURE_SIZE; x++) {
-					for(int y = 0; y < THUMB_PICTURE_SIZE; y++) {
+				for (int x = 0; x < THUMB_PICTURE_SIZE; x++) {
+					for (int y = 0; y < THUMB_PICTURE_SIZE; y++) {
 						int pictureNo = row * THUMB_COL_NUMBER + col;
 
-						if(pictureNo < PICTURE_NUMBER) { // in case last row is not perfect
-							int relativeX = (int) (x*relativeDivisor);
-							int relativeY = (int) (y*relativeDivisor);
+						if (pictureNo < PICTURE_NUMBER) { // in case last row is not perfect
+							int relativeX = (int) (x * relativeDivisor);
+							int relativeY = (int) (y * relativeDivisor);
 
 							float val = grey[pictureNo][relativeX][relativeY];
 							Color color = Color.color(val, val, val);
 							
 							imageWriter.setColor(
-									y + col*(THUMB_PICTURE_SIZE + THUMB_GAP_SIZE),
-									x + row*(THUMB_PICTURE_SIZE + THUMB_GAP_SIZE),
+									y + col * (THUMB_PICTURE_SIZE + THUMB_GAP_SIZE),
+									x + row * (THUMB_PICTURE_SIZE + THUMB_GAP_SIZE),
 									color);
 						}
 					}
@@ -369,15 +387,16 @@ public class Main extends Application {
 		thumbLayout.getChildren().add(thumbView);
 		
 		// create new scene
-		Scene thumbViewScene = new Scene(thumbLayout, thumbImage.getWidth(), thumbImage.getHeight());
+		Scene thumbViewScene = new Scene
+				(thumbLayout, thumbImage.getWidth(), thumbImage.getHeight());
 		
 		thumbView.addEventHandler(MouseEvent.MOUSE_MOVED, event -> {			
 			//find out which picture is underneath
 			double hoverX = event.getX();
 			double hoverY = event.getY();
 			
-			int selectedColumn = (int) (hoverX/(THUMB_PICTURE_SIZE + THUMB_GAP_SIZE));
-			int selectedRow = (int) (hoverY/(THUMB_PICTURE_SIZE + THUMB_GAP_SIZE));
+			int selectedColumn = (int) (hoverX / (THUMB_PICTURE_SIZE + THUMB_GAP_SIZE));
+			int selectedRow = (int) (hoverY / (THUMB_PICTURE_SIZE + THUMB_GAP_SIZE));
 			
 			//check if it is not in the gap between
 			if (hoverX % (THUMB_PICTURE_SIZE + THUMB_GAP_SIZE) <= THUMB_PICTURE_SIZE 
