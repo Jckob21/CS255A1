@@ -23,9 +23,12 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 
-
 public class Main extends Application {
 	private static final String FILENAME = "CThead";
+
+	private static final int SCENE_WIDTH = 1024;
+	private static final int SCENE_HEIGHT = 768;
+	
 	private static final int PICTURE_WIDTH = 256;
 	private static final int PICTURE_HEIGHT = 256;
 	private static final int PICTURE_NUMBER = 113;
@@ -38,10 +41,12 @@ public class Main extends Application {
 	private static final double MAX_GAMMA = 4;
 	private static final double DEFAULT_GAMMA = 1;
 	
-	//default state
 	private static final int DEFAULT_IMAGE = 76;
 	
-	ImageView imageView;
+	private static final ResizeMethod DEFAULT_RESIZE_METHOD 
+											= ResizeMethod.NEAREST_NEIGHBOUR;
+	
+	ImageView imageView; // ImageView of the displayed image
 	private short cthead[][][];
 	private float grey[][][];
 	
@@ -49,7 +54,7 @@ public class Main extends Application {
 	private int currentImage = DEFAULT_IMAGE;
 	private int currentSize = DEFAULT_RESOLUTION;
 	private double currentGamma = DEFAULT_GAMMA;
-	private ResizeMethod currentResizeMethod = ResizeMethod.NEAREST_NEIGHBOUR;
+	private ResizeMethod currentResizeMethod = DEFAULT_RESIZE_METHOD;
 	
 	enum ResizeMethod {
 		NEAREST_NEIGHBOUR,
@@ -61,7 +66,7 @@ public class Main extends Application {
 		primaryStage.setTitle("CThead Viewer");
 		
 		try {
-			readData(FILENAME);
+			this.readData(FILENAME);
 		} catch (IOException e) {
 			System.out.println("Could not find CThead file in the working directory.");
 			System.out.println("Working Directory = " + System.getProperty("user.dir"));
@@ -91,38 +96,28 @@ public class Main extends Application {
 		
 		group.selectedToggleProperty().addListener((ob, o, n) -> {
 			if (rb1.isSelected()) {
-				currentResizeMethod = ResizeMethod.NEAREST_NEIGHBOUR;
+				this.currentResizeMethod = ResizeMethod.NEAREST_NEIGHBOUR;
 				System.out.println("Resize method changed to NEAREST_NEIGHBOUR");
 			} else if (rb2.isSelected()) {
-				currentResizeMethod = ResizeMethod.BILINEAR_INTERPOLATION;
+				this.currentResizeMethod = ResizeMethod.BILINEAR_INTERPOLATION;
 				System.out.println("Resize method changed to BILINEAR INTERPOLATION");
 			}
-			//TODO
-			imageView.setImage(null); // clear the old image
-			Image newImage = getSlice();
-			imageView.setImage(newImage); // Update the GUI so the new image is displayed
+
+			this.updateImage(imageView);
 		});
 		
-		sizeSlider.valueProperty().addListener((ob, oldVal, newVal) -> {
-			//System.out.println("New size value: " + newVal.intValue());
-			
+		sizeSlider.valueProperty().addListener((ob, oldVal, newVal) -> {	
 			//set new size value
-			currentSize = newVal.intValue();
+			this.currentSize = newVal.intValue();
 			
-			imageView.setImage(null); // clear the old image
-			Image newImage = getSlice();
-			imageView.setImage(newImage); // Update the GUI so the new image is displayed
+			this.updateImage(imageView);
 		});
 		
 		gammaSlider.valueProperty().addListener((ob, oldVal, newVal) -> {
-			//System.out.println("New gamma value: " + newVal.doubleValue());
-			
 			//set new gamma value
-			currentGamma = newVal.doubleValue();
+			this.currentGamma = newVal.doubleValue();
 			
-			imageView.setImage(null); // clear the old image
-			Image newImage = getSlice();
-			imageView.setImage(newImage); // Update the GUI so the new image is displayed
+			this.updateImage(imageView);
 		});
 		
 		// build main GUI scene
@@ -130,11 +125,11 @@ public class Main extends Application {
 		
 		root.getChildren().addAll(rb1, rb2, gammaSlider, sizeSlider, imageView);
 		
-		Scene scene = new Scene(root, 1024, 768);
+		Scene scene = new Scene(root, SCENE_WIDTH, SCENE_HEIGHT);
 		primaryStage.setScene(scene);
 		primaryStage.show();
 		
-		createThumbWindow(0,0);
+		this.createThumbWindow(0,0);
 	}
 	
 	private void readData(String filename) throws IOException {
@@ -155,9 +150,9 @@ public class Main extends Application {
 		grey = new float[PICTURE_NUMBER][PICTURE_WIDTH][PICTURE_HEIGHT];
 		
 		// read the data
-		for (int k = 0; k < 113; k++) {
-			for (int j = 0; j < 256; j++) {
-				for (int i = 0; i < 256; i++) {
+		for (int k = 0; k < PICTURE_NUMBER; k++) {
+			for (int j = 0; j < PICTURE_WIDTH; j++) {
+				for (int i = 0; i < PICTURE_HEIGHT; i++) {
 					// swap bytes
 					b1 = ((int) in.readByte()) & 0xff;
 					b2 = ((int) in.readByte()) & 0xff;
@@ -188,13 +183,23 @@ public class Main extends Application {
 		
 		PixelWriter imageWriter = image.getPixelWriter();
 		
+		double relativeDivisor = DEFAULT_RESOLUTION/(double)currentSize;
+		
 		if(currentResizeMethod == ResizeMethod.NEAREST_NEIGHBOUR) {
 			// perform resize using nearest neighbor
 			for (int y = 0; y < currentSize; y++) {
 				for (int x = 0; x < currentSize; x++) {
 					// calculate relative position in original image
-					int relativeX = (int)(x*(DEFAULT_RESOLUTION/(double)currentSize));
-					int relativeY = (int)(y*(DEFAULT_RESOLUTION/(double)currentSize));
+					int relativeX = (int)Math.round(x*relativeDivisor);
+					int relativeY = (int)Math.round(y*relativeDivisor);
+					
+					if (relativeX > DEFAULT_RESOLUTION - 1) {
+						relativeX = DEFAULT_RESOLUTION - 1;
+					}
+					
+					if (relativeY > DEFAULT_RESOLUTION - 1) {
+						relativeY = DEFAULT_RESOLUTION - 1;
+					}
 					
 					float val = grey[currentImage][relativeY][relativeX];
 					Color color = Color.color(val, val, val);
@@ -207,8 +212,8 @@ public class Main extends Application {
 			for (int y = 0; y < currentSize; y++) {
 				for (int x = 0; x < currentSize; x++) {
 					// calculate relative position in original image
-					double relativeX = x*(DEFAULT_RESOLUTION/(double)currentSize);
-					double relativeY = y*(DEFAULT_RESOLUTION/(double)currentSize);
+					double relativeX = x*relativeDivisor;
+					double relativeY = y*relativeDivisor;
 					
 					if (relativeX > DEFAULT_RESOLUTION - 1) {
 						relativeX = DEFAULT_RESOLUTION - 1;
@@ -227,22 +232,30 @@ public class Main extends Application {
 					float cColorValue = grey[currentImage][y2][x2];
 					float dColorValue = grey[currentImage][y1][x2];
 					
+					// if both relative coordinates are integers, just do nearest neighbor
 					if(relativeX - (int)relativeX == 0 && relativeY - (int)relativeY == 0) {
-						float val = grey[currentImage][(int)relativeY][(int)relativeX];
+						float val = grey[currentImage]
+								[(int)Math.round(relativeY)][(int)Math.round(relativeX)];
 						Color color = Color.color(val, val, val);
 						
-						// Apply the new colour
+						// Apply the new color
 						imageWriter.setColor(x, y, color);
+					
+					// if only relative X coordinate is an integer, do lerp function only on y coordinates
 					} else if (relativeX - (int)relativeX == 0) {
 						float gColorValue = lerp(aColorValue, bColorValue,y1,y2,relativeY);
 						
 						Color color = Color.color(gColorValue, gColorValue, gColorValue);
 						imageWriter.setColor(x, y, color);
+					
+					// if only relative Y coordinate is an integer, do lerp function only on x coordinates
 					} else if (relativeY - (int)relativeY == 0) {
 						float gColorValue = lerp(aColorValue, dColorValue,x1,x2,relativeX);
 						
 						Color color = Color.color(gColorValue, gColorValue, gColorValue);
 						imageWriter.setColor(x, y, color);
+						
+					// if both coordinates are not integers, do full bilinear interpolation
 					} else {
 						float fColorValue = lerp(bColorValue, cColorValue,x1,x2,relativeX);
 						
@@ -274,21 +287,20 @@ public class Main extends Application {
 			}
 		}
 		
-		//create a map with new Gamma value
+		// create a look-up table with new Gamma values
 		HashMap<Integer, Double> gammaValues = new HashMap<>(256);
 		for(int i=0; i<256; i++) {
 			gammaValues.put(i, Math.pow(i/255.0, (1.0/currentGamma)));
-			//System.out.println(i + ": Gamma value created: " + Math.pow(i/255.0, (1.0/currentGamma)));
 		}
 		
+		// apply gamma correction
 		PixelReader imageReader = image.getPixelReader();
-		//apply gamma to the image
 		for (int y = 0; y < currentSize; y++) {
 			for (int x = 0; x < currentSize; x++) {
-				double val = imageReader.getColor(y,x).getRed();
-				//double newVal = Math.pow(val, 1.0/currentGamma);
-				double newVal = gammaValues.get(Integer.valueOf((int)Math.round(val * 255.0)));
-				//System.out.println("Color read: " + (int)Math.round(val * 255.0));
+				double val = imageReader.getColor(y,x).getRed(); // we could take any channel as it is grey
+				//double newVal = Math.pow(val, 1.0/currentGamma); - this does not use look-up table
+				double newVal = gammaValues.get(Integer.valueOf((int)Math.round(val * 255.0))); // get value from look-up table
+				
 				Color color = Color.color(newVal, newVal, newVal);
 				
 				imageWriter.setColor(y, x, color);
@@ -302,9 +314,17 @@ public class Main extends Application {
 		return (float)(v1 + (v2 - v1)*((p-p1)/(p2-p1)));
 	}
 	
+	private static final int THUMB_IMAGE_WIDTH = 500;
+	private static final int THUMB_IMAGE_HEIGHT = 500;
+	private static final int THUMB_ROW_NUMBER = 10;
+	private static final int THUMB_COL_NUMBER = 12;
+	private static final int THUMB_PICTURE_SIZE = 38;
+	private static final int THUMB_GAP_SIZE = 4;
+	
 	public void createThumbWindow(double atX, double atY) {
 		// create image containing all thumbs
-		WritableImage thumbImage = new WritableImage(500, 500);
+		WritableImage thumbImage = 
+				new WritableImage(THUMB_IMAGE_WIDTH, THUMB_IMAGE_HEIGHT);
 		ImageView thumbView = new ImageView(thumbImage);
 		PixelWriter imageWriter = thumbImage.getPixelWriter();
 		
@@ -315,19 +335,20 @@ public class Main extends Application {
 			}
 		}
 		
+		double relativeDivisor = DEFAULT_RESOLUTION/(double)THUMB_PICTURE_SIZE;
 		// TODO create final variables for rows and columns as they are fixed
 		// it would be sth like: rowNumber = 10; imagesInCol = 12; thumbImageSize = 38; gap = 4;
 		// loop through each image in particular row and column
 		for(int row = 0; row < 10; row++) { 
 			for(int col = 0; col < 12; col++) {
-				// draw image resized using nearest neighour technique
+				// draw image resized using nearest neighor technique
 				for(int x = 0; x < 38; x++) {
 					for(int y = 0; y < 38; y++) {
 						int pictureNo = row * 12 + col;
 
 						if(pictureNo < PICTURE_NUMBER) { // in case last row is not perfect
-							int relativeX = (int) (x*DEFAULT_RESOLUTION/(double)38);
-							int relativeY = (int) (y*DEFAULT_RESOLUTION/(double)38);
+							int relativeX = (int) (x*relativeDivisor);
+							int relativeY = (int) (y*relativeDivisor);
 
 							float val = grey[pictureNo][relativeX][relativeY];
 							Color color = Color.color(val, val, val);
