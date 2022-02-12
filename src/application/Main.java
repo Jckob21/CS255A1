@@ -198,52 +198,37 @@ public class Main extends Application {
 		double relativeDivisor = DEFAULT_RESOLUTION / (double) currentSize;
 		
 		if (currentResizeMethod == ResizeMethod.NEAREST_NEIGHBOUR) {
-			// perform resize using nearest neighbor
-			for (int y = 0; y < currentSize; y++) {
-				for (int x = 0; x < currentSize; x++) {
-					// calculate relative position in original image
-					int relativeX = (int) Math.round(x * relativeDivisor);
-					int relativeY = (int) Math.round(y * relativeDivisor);
-					
-					if (relativeX > DEFAULT_RESOLUTION - 1) {
-						relativeX = DEFAULT_RESOLUTION - 1;
-					}
-					
-					if (relativeY > DEFAULT_RESOLUTION - 1) {
-						relativeY = DEFAULT_RESOLUTION - 1;
-					}
-					
-					float val = grey[currentImage][relativeY][relativeX];
-					Color color = Color.color(val, val, val);
-
-					imageWriter.setColor(x, y, color);
-				}
-			}
+			this.resizeNearest(relativeDivisor, imageWriter);
 		} else if (currentResizeMethod == ResizeMethod.BILINEAR_INTERPOLATION) {
 			this.resizeBilinear(relativeDivisor, imageWriter);
 		}
 		
-		// create a look-up table with new Gamma values
-		HashMap<Integer, Double> gammaValues = new HashMap<>(COLOR_VARIATIONS);
-		for (int i=0; i<COLOR_VARIATIONS; i++) {
-			gammaValues.put(i, Math.pow(i / 255.0, (1.0 / currentGamma)));
-		}
+		this.applyGammaCorrection(imageWriter, image.getPixelReader());
 		
-		// apply gamma correction
-		PixelReader imageReader = image.getPixelReader();
+		return image;
+	}
+	
+	public void resizeNearest(double relativeDivisor, PixelWriter imageWriter) {
 		for (int y = 0; y < currentSize; y++) {
 			for (int x = 0; x < currentSize; x++) {
-				double val = imageReader.getColor(y, x).getRed(); // we could take any channel as it is grey
-				//double newVal = Math.pow(val, 1.0/currentGamma); - this does not use look-up table
-				double newVal = gammaValues.get(Integer.valueOf((int) Math.round(val * 255.0))); // get value from look-up table
+				// calculate relative position in original image
+				int relativeX = (int) Math.round(x * relativeDivisor);
+				int relativeY = (int) Math.round(y * relativeDivisor);
 				
-				Color color = Color.color(newVal, newVal, newVal);
+				if (relativeX > DEFAULT_RESOLUTION - 1) {
+					relativeX = DEFAULT_RESOLUTION - 1;
+				}
 				
-				imageWriter.setColor(y, x, color);
+				if (relativeY > DEFAULT_RESOLUTION - 1) {
+					relativeY = DEFAULT_RESOLUTION - 1;
+				}
+				
+				float val = grey[currentImage][relativeY][relativeX];
+				Color color = Color.color(val, val, val);
+
+				imageWriter.setColor(x, y, color);
 			}
 		}
-
-		return image;
 	}
 	
 	public void resizeBilinear(double relativeDivisor, PixelWriter imageWriter) {
@@ -336,6 +321,26 @@ public class Main extends Application {
 					// e(relativeX,y1)
 					// f(relativeX,y2)
 					// g(relativeX,relativeY)
+			}
+		}
+	}
+	
+	public void applyGammaCorrection(PixelWriter imageWriter, PixelReader imageReader) {
+		HashMap<Integer, Double> gammaValues = new HashMap<>(COLOR_VARIATIONS);
+		for (int i=0; i<COLOR_VARIATIONS; i++) {
+			gammaValues.put(i, Math.pow(i / 255.0, (1.0 / currentGamma)));
+		}
+		
+		// apply gamma correction
+		for (int y = 0; y < currentSize; y++) {
+			for (int x = 0; x < currentSize; x++) {
+				double val = imageReader.getColor(y, x).getRed(); // we could take any channel as it is grey
+				//double newVal = Math.pow(val, 1.0/currentGamma); - this does not use look-up table
+				double newVal = gammaValues.get(Integer.valueOf((int) Math.round(val * 255.0))); // get value from look-up table
+				
+				Color color = Color.color(newVal, newVal, newVal);
+				
+				imageWriter.setColor(y, x, color);
 			}
 		}
 	}
