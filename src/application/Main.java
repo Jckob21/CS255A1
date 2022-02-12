@@ -108,27 +108,25 @@ public class Main extends Application {
 		group.selectedToggleProperty().addListener((ob, o, n) -> {
 			if (rb1.isSelected()) {
 				this.currentResizeMethod = ResizeMethod.NEAREST_NEIGHBOUR;
-				System.out.println("Resize method changed to NEAREST_NEIGHBOUR");
 			} else if (rb2.isSelected()) {
 				this.currentResizeMethod = ResizeMethod.BILINEAR_INTERPOLATION;
-				System.out.println("Resize method changed to BILINEAR INTERPOLATION");
 			}
 
-			this.updateImage(imageView);
+			this.updateImage();
 		});
 		
 		sizeSlider.valueProperty().addListener((ob, oldVal, newVal) -> {	
 			//set new size value
 			this.currentSize = newVal.intValue();
 			
-			this.updateImage(imageView);
+			this.updateImage();
 		});
 		
 		gammaSlider.valueProperty().addListener((ob, oldVal, newVal) -> {
 			//set new gamma value
 			this.currentGamma = newVal.doubleValue();
 			
-			this.updateImage(imageView);
+			this.updateImage();
 		});
 		
 		// build main GUI scene
@@ -222,97 +220,7 @@ public class Main extends Application {
 				}
 			}
 		} else if (currentResizeMethod == ResizeMethod.BILINEAR_INTERPOLATION) {
-			for (int y = 0; y < currentSize; y++) {
-				for (int x = 0; x < currentSize; x++) {
-					// calculate relative position in original image
-					double relativeX = x * relativeDivisor;
-					double relativeY = y * relativeDivisor;
-					
-					if (relativeX > DEFAULT_RESOLUTION - 1) {
-						relativeX = DEFAULT_RESOLUTION - 1;
-					}
-					if (relativeY > DEFAULT_RESOLUTION - 1) {
-						relativeY = DEFAULT_RESOLUTION - 1;
-					}
-					
-					int x1 = (int) Math.floor(relativeX);
-					int x2 = (int) Math.ceil(relativeX);
-					int y1 = (int) Math.floor(relativeY);
-					int y2 = (int) Math.ceil(relativeY);
-					
-					float aColorValue = grey[currentImage][y1][x1];
-					float bColorValue = grey[currentImage][y2][x1];
-					float cColorValue = grey[currentImage][y2][x2];
-					float dColorValue = grey[currentImage][y1][x2];
-					
-					// if both relative coordinates are integers,
-					// just do nearest neighbor
-					if (relativeX - (int) relativeX == 0
-							&& relativeY - (int) relativeY == 0) {
-						float val = grey
-								[currentImage]
-								[(int) Math.round(relativeY)]
-								[(int) Math.round(relativeX)];
-						Color color = Color.color(val, val, val);
-						
-						// Apply the new color
-						imageWriter.setColor(x, y, color);
-					
-					// if only relative X coordinate is an integer,
-					// do lerp function only on y coordinates
-					} else if (relativeX - (int) relativeX == 0) {
-						float gColorValue = lerp(aColorValue, bColorValue,
-								y1, y2, relativeY);
-						
-						Color color = Color.color(gColorValue, gColorValue,
-								gColorValue);
-						imageWriter.setColor(x, y, color);
-					
-					// if only relative Y coordinate is an integer,
-					// do lerp function only on x coordinates
-					} else if (relativeY - (int) relativeY == 0) {
-						float gColorValue = lerp(aColorValue, dColorValue,
-								x1, x2, relativeX);
-						
-						Color color = Color.color(gColorValue, gColorValue,
-								gColorValue);
-						imageWriter.setColor(x, y, color);
-						
-					// if both coordinates are not integers,
-					// do full bilinear interpolation
-					} else {
-						float fColorValue = lerp(bColorValue, cColorValue,
-								x1, x2, relativeX);
-						
-						float eColorValue = lerp(aColorValue, dColorValue,
-								x1, x2, relativeX);
-						
-						float gColorValue = lerp(eColorValue, fColorValue,
-								y1, y2, relativeY);
-						
-						Color color = Color.color(gColorValue, gColorValue,
-								gColorValue);
-						
-						imageWriter.setColor(x, y, color);
-					}
-						//
-						// b - -f- c
-						// |    g  |
-						// |       |
-						// |       |
-						// a - -e- d
-						//
-						// where:
-						// a(x1,y1)
-						// b(x1,y2)
-						// c(x2,y2)
-						// d(x2,y1)
-						//
-						// e(relativeX,y1)
-						// f(relativeX,y2)
-						// g(relativeX,relativeY)
-				}
-			}
+			this.resizeBilinear(relativeDivisor, imageWriter);
 		}
 		
 		// create a look-up table with new Gamma values
@@ -336,6 +244,100 @@ public class Main extends Application {
 		}
 
 		return image;
+	}
+	
+	public void resizeBilinear(double relativeDivisor, PixelWriter imageWriter) {
+		for (int y = 0; y < currentSize; y++) {
+			for (int x = 0; x < currentSize; x++) {
+				// calculate relative position in original image
+				double relativeX = x * relativeDivisor;
+				double relativeY = y * relativeDivisor;
+				
+				if (relativeX > DEFAULT_RESOLUTION - 1) {
+					relativeX = DEFAULT_RESOLUTION - 1;
+				}
+				if (relativeY > DEFAULT_RESOLUTION - 1) {
+					relativeY = DEFAULT_RESOLUTION - 1;
+				}
+				
+				int x1 = (int) Math.floor(relativeX);
+				int x2 = (int) Math.ceil(relativeX);
+				int y1 = (int) Math.floor(relativeY);
+				int y2 = (int) Math.ceil(relativeY);
+				
+				float aColorValue = grey[currentImage][y1][x1];
+				float bColorValue = grey[currentImage][y2][x1];
+				float cColorValue = grey[currentImage][y2][x2];
+				float dColorValue = grey[currentImage][y1][x2];
+				
+				// if both relative coordinates are integers,
+				// just do nearest neighbor
+				if (relativeX - (int) relativeX == 0
+						&& relativeY - (int) relativeY == 0) {
+					float val = grey
+							[currentImage]
+							[(int) Math.round(relativeY)]
+							[(int) Math.round(relativeX)];
+					Color color = Color.color(val, val, val);
+					
+					// Apply the new color
+					imageWriter.setColor(x, y, color);
+				
+				// if only relative X coordinate is an integer,
+				// do lerp function only on y coordinates
+				} else if (relativeX - (int) relativeX == 0) {
+					float gColorValue = lerp(aColorValue, bColorValue,
+							y1, y2, relativeY);
+					
+					Color color = Color.color(gColorValue, gColorValue,
+							gColorValue);
+					imageWriter.setColor(x, y, color);
+				
+				// if only relative Y coordinate is an integer,
+				// do lerp function only on x coordinates
+				} else if (relativeY - (int) relativeY == 0) {
+					float gColorValue = lerp(aColorValue, dColorValue,
+							x1, x2, relativeX);
+					
+					Color color = Color.color(gColorValue, gColorValue,
+							gColorValue);
+					imageWriter.setColor(x, y, color);
+					
+				// if both coordinates are not integers,
+				// do full bilinear interpolation
+				} else {
+					float fColorValue = lerp(bColorValue, cColorValue,
+							x1, x2, relativeX);
+					
+					float eColorValue = lerp(aColorValue, dColorValue,
+							x1, x2, relativeX);
+					
+					float gColorValue = lerp(eColorValue, fColorValue,
+							y1, y2, relativeY);
+					
+					Color color = Color.color(gColorValue, gColorValue,
+							gColorValue);
+					
+					imageWriter.setColor(x, y, color);
+				}
+					//
+					// b - -f- c
+					// |    g  |
+					// |       |
+					// |       |
+					// a - -e- d
+					//
+					// where:
+					// a(x1,y1)
+					// b(x1,y2)
+					// c(x2,y2)
+					// d(x2,y1)
+					//
+					// e(relativeX,y1)
+					// f(relativeX,y2)
+					// g(relativeX,relativeY)
+			}
+		}
 	}
 	
 	public float lerp(float v1, float v2, double p1, double p2, double p) {		
@@ -408,7 +410,7 @@ public class Main extends Application {
 					// set displayed picture to new one, refresh the view
 					this.currentImage = selectedPicture;
 					
-					this.updateImage(imageView);
+					this.updateImage();
 				}
 			}
 
@@ -426,7 +428,7 @@ public class Main extends Application {
 		newWindow.show();
 	}
 	
-	public void updateImage(ImageView imageView) {
+	public void updateImage() {
 		imageView.setImage(null); // clear the old image
 		Image newImage = getSlice();
 		imageView.setImage(newImage); // Update the GUI so the new image is displayed
