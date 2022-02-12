@@ -176,10 +176,15 @@ public class Main extends Application {
 					}
 
 					cthead[k][j][i] = read;
-					
-					// scale color to 0-1 values
-					grey[k][j][i] = ((float) cthead[k][j][i] 
-							- (float) min) / ((float) max - (float) min);
+				}
+			}
+		}
+		
+		// scale color to 0-1 values
+		for (int k = 0; k < PICTURE_NUMBER; k++) {
+			for (int j = 0; j < PICTURE_WIDTH; j++) {
+				for (int i = 0; i < PICTURE_HEIGHT; i++) {
+					grey[k][j][i] = ((float) cthead[k][j][i] - (float) min) / ((float) max - (float) min);
 				}
 			}
 		}
