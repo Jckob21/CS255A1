@@ -331,12 +331,12 @@ public class Main extends Application {
 	}
 	
 	public void applyGammaCorrection(PixelWriter imageWriter, PixelReader imageReader) {
+		// create a look-up table
 		HashMap<Integer, Double> gammaValues = new HashMap<>(COLOR_VARIATIONS);
 		for (int i=0; i<COLOR_VARIATIONS; i++) {
 			gammaValues.put(i, Math.pow(i / 255.0, (1.0 / currentGamma)));
 		}
 		
-		// apply gamma correction
 		for (int y = 0; y < currentSize; y++) {
 			for (int x = 0; x < currentSize; x++) {
 				double val = imageReader.getColor(y, x).getRed(); // we could take any channel as it is grey
