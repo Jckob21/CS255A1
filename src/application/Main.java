@@ -372,25 +372,25 @@ public class Main extends Application {
 
 		for (int row = 0; row < THUMB_ROW_NUMBER; row++) { 
 			for (int col = 0; col < THUMB_COL_NUMBER; col++) {
-				// draw image resized using nearest neighor technique
-				for (int x = 0; x < THUMB_PICTURE_SIZE; x++) {
-					for (int y = 0; y < THUMB_PICTURE_SIZE; y++) {
-						int pictureNo = row * THUMB_COL_NUMBER + col;
-
-						if (pictureNo < PICTURE_NUMBER) { // in case last row is not perfect
-							int relativeX = (int) (x * relativeDivisor);
-							int relativeY = (int) (y * relativeDivisor);
-
-							float val = grey[pictureNo][relativeX][relativeY];
-							Color color = Color.color(val, val, val);
+				int pictureNo = row * THUMB_COL_NUMBER + col;
+				if (pictureNo < PICTURE_NUMBER) { // in case last row is not perfect
+					for (int x = 0; x < THUMB_PICTURE_SIZE; x++) {
+						for (int y = 0; y < THUMB_PICTURE_SIZE; y++) {
 							
-							imageWriter.setColor(
-									y + col * (THUMB_PICTURE_SIZE + THUMB_GAP_SIZE),
-									x + row * (THUMB_PICTURE_SIZE + THUMB_GAP_SIZE),
-									color);
+								int relativeX = (int) (x * relativeDivisor);
+								int relativeY = (int) (y * relativeDivisor);
+
+								float val = grey[pictureNo][relativeX][relativeY];
+								Color color = Color.color(val, val, val);
+								
+								imageWriter.setColor(
+										y + col * (THUMB_PICTURE_SIZE + THUMB_GAP_SIZE),
+										x + row * (THUMB_PICTURE_SIZE + THUMB_GAP_SIZE),
+										color);
+
 						}
 					}
-				}
+				}				
 			}
 		}
 		
